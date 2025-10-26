@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Font Preview App</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .preview { font-size: 24px; margin-top: 10px; border: 1px solid #eee; padding: 10px; min-height: 100px; }
+        textarea { width: 100%; height: 100px; margin-bottom: 10px; }
+        select { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Font Preview App (7 Fonts)</h1>
+    <p>Type your text below and select a font to preview it.</p>
+    
+    <textarea id="user-text" placeholder="Enter your text here...">The quick brown fox jumps over the lazy dog.</textarea>
+    
+    <label for="font-select">Select Font:</label>
+    <select id="font-select">
+        <option value="">Choose a font</option>
+        <!-- Options will be added dynamically -->
+    </select>
+    
+    <div id="preview" class="preview">Preview will appear here.</div>
+
+    <script>
+        const fontSelect = document.getElementById('font-select');
+        const userText = document.getElementById('user-text');
+        const preview = document.getElementById('preview');
+        const numFonts = 7;
+
+        // jsDelivr URLs (CORS-friendly proxy for your GitHub fonts)
+        const fontUrls = [
+            'https://cdn.jsdelivr.net/gh/fsfs99/font-app@main/fonts/alfont_com_Tasees-Bold.ttf',
+            'https://cdn.jsdelivr.net/gh/fsfs99/font-app@main/fonts/alfont_com_All-Genders-Regular-v4.otf',
+            'https://cdn.jsdelivr.net/gh/fsfs99/font-app@main/fonts/alfont_com_AlFont_com_pdms-saleem-quranfont.ttf',
+            'https://cdn.jsdelivr.net/gh/fsfs99/font-app@main/fonts/alfont_com_AlFont_com_GE-Thuluth-Light_10%20(1).otf',
+            'https://cdn.jsdelivr.net/gh/fsfs99/font-app@main/fonts/alfont_com_AlFont_com_AM_Thulth_Regular_0.1.ttf',
+            'https://cdn.jsdelivr.net/gh/fsfs99/font-app@main/fonts/Sanabel-Khebrat-Musamem-2021.otf',
+            'https://cdn.jsdelivr.net/gh/fsfs99/font-app@main/fonts/101-Spirit-Of-Doha-Black-1.otf'
+        ];
+
+        const fontNames = [
+            'Tasees Bold',
+            'All Genders Regular v4',
+            'Pdms Saleem Quranfont',
+            'GE Thuluth Light 10',
+            'AM Thulth Regular 0.1',
+            'Sanabel Khebrat Musamem 2021',
+            'Spirit Of Doha Black 1'
+        ];
+
+        let fonts = []; // To store loaded fonts
+
+        // Load fonts on page load
+        async function loadFonts() {
+            for (let i = 0; i < numFonts; i++) {
+                try {
+                    console.log(`Loading font ${i + 1}: ${fontUrls[i]}`);
+                    const response = await fetch(fontUrls[i]);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    const arrayBuffer = await response.arrayBuffer();
+                    const font = new FontFace(`preview-font-${i}`, arrayBuffer);
+                    await font.load();
+                    document.fonts.add(font);
+                    fonts[i] = font;
+                    console.log(`Font ${i + 1} loaded successfully.`);
+
+                    // Add to dropdown
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = fontNames[i];
+                    fontSelect.appendChild(option);
+                } catch (error) {
+                    console.error(`Error loading font ${i + 1} (${fontNames[i]}):`, error);
+                }
+            }
+        }
+
+        // Update preview when font or text changes
+        function updatePreview() {
+            const selectedIndex = fontSelect.value;
+            const text = userText.value;
+            if (selectedIndex === '' || !fonts[selectedIndex]) {
+                preview.style.fontFamily = '';
+                preview.textContent = 'Select a font to preview.';
+                return;
+            }
+            preview.style.fontFamily = `preview-font-${selectedIndex}`;
+            preview.textContent = text || 'Enter text to preview.';
+        }
+
+        // Event listeners
+        fontSelect.addEventListener('change', updatePreview);
+        userText.addEventListener('input', updatePreview);
+
+        // Load fonts when page loads
+        window.addEventListener('load', loadFonts);
+    </script>
+</body>
+</html>
