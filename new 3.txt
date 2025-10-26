@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Font Preview App</title>
+  <style>
+    :root {
+      --bg-light: #f7f9fc;
+      --bg-dark: #0e1117;
+      --text-light: #111;
+      --text-dark: #eee;
+      --accent: #4a90e2;
+      --transition-speed: 0.6s;
+    }
+
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background-color: var(--bg-light);
+      color: var(--text-light);
+      margin: 0;
+      padding: 20px;
+      transition: background-color var(--transition-speed), color var(--transition-speed);
+    }
+
+    body.dark {
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 100px;
+      font-size: 1rem;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      outline: none;
+      transition: border var(--transition-speed);
+      background-color: inherit;
+      color: inherit;
+    }
+
+    select, input[type="color"], input[type="range"] {
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+      background-color: inherit;
+      color: inherit;
+      transition: background-color var(--transition-speed), color var(--transition-speed);
+    }
+
+    select.dark, input.dark {
+      background-color: #222;
+      color: #fff;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #preview {
+      margin-top: 20px;
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid #ddd;
+      min-height: 120px;
+      font-size: 24px;
+      transition: all var(--transition-speed);
+      text-align: center;
+      background-color: rgba(0,0,0,0.02);
+    }
+
+    body.dark #preview {
+      border-color: #333;
+      background-color: rgba(255,255,255,0.05);
+    }
+
+    .theme-toggle {
+      cursor: pointer;
+      padding: 10px 16px;
+      border-radius: 8px;
+      background-color: var(--accent);
+      color: #fff;
+      border: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.4s ease, background-color var(--transition-speed);
+    }
+
+    .theme-toggle:hover {
+      transform: scale(1.05);
+    }
+
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+      #preview {
+        font-size: 20px;
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>🎨 Font Preview App</h1>
+
+  <div class="controls">
+    <textarea id="user-text" placeholder="اكتب النص هنا...">الخط السريع قفز فوق الكلب الكسول.</textarea>
+    <select id="font-select">
+      <option value="">اختر الخط</option>
+    </select>
+    <input type="color" id="color-picker" title="لون النص">
+    <input type="range" id="font-size" min="12" max="80" value="24" title="حجم الخط">
+    <button class="theme-toggle" id="theme-toggle">
+      <span id="theme-icon">🌞</span> تبديل الثيم
+    </button>
+  </div>
+
+  <div id="preview">سيظهر المعاينة هنا.</div>
+
+  <script>
+    const fonts = [
+      {
+        name: "Tasees Bold",
+        url: "https://cdn.jsdelivr.net/gh/fsfs99/font-app@main/fonts/alfont_com_Tasees-Bold.ttf",
+      },
+      {
+        name: "All Genders Regular v4",
+        url: "https://cdn.jsdelivr.net/gh/fsfs99/font-app@main/fonts/alfont_com_All-Genders-Regular-v4.otf",
+      },
+      {
+        name: "Pdms Saleem Quranfont",
+        url: "https://cdn.jsdelivr.net/gh/fsfs99/font-app@main/fonts/alfont_com_AlFont_com_pdms-saleem-quranfont.ttf",
+      },
+      {
+        name: "GE Thuluth Light 10",
+        url: "https://cdn.jsdelivr.net/gh/fsfs99/font-app@main/fonts/alfont_com_AlFont_com_GE-Thuluth-Light_10%20(1).otf",
+      },
+      {
+        name: "AM Thulth Regular 0.1",
+        url: "https://cdn.jsdelivr.net/gh/fsfs99/font-app@main/fonts/alfont_com_AlFont_com_AM_Thulth_Regular_0.1.ttf",
+      },
+      {
+        name: "Sanabel Khebrat Musamem 2021",
+        url: "https://cdn.jsdelivr.net/gh/fsfs99/font-app@main/fonts/Sanabel-Khebrat-Musamem-2021.otf",
+      },
+      {
+        name: "Spirit Of Doha Black 1",
+        url: "https://cdn.jsdelivr.net/gh/fsfs99/font-app@main/fonts/101-Spirit-Of-Doha-Black-1.otf",
+      },
+    ];
+
+    const fontSelect = document.getElementById("font-select");
+    const userText = document.getElementById("user-text");
+    const preview = document.getElementById("preview");
+    const colorPicker = document.getElementById("color-picker");
+    const fontSize = document.getElementById("font-size");
+    const themeToggle = document.getElementById("theme-toggle");
+    const themeIcon = document.getElementById("theme-icon");
+
+    async function loadFonts() {
+      for (let i = 0; i < fonts.length; i++) {
+        try {
+          const res = await fetch(fonts[i].url);
+          const buffer = await res.arrayBuffer();
+          const fontFace = new FontFace(`font-${i}`, buffer);
+          await fontFace.load();
+          document.fonts.add(fontFace);
+          const opt = document.createElement("option");
+          opt.value = `font-${i}`;
+          opt.textContent = fonts[i].name;
+          fontSelect.appendChild(opt);
+        } catch (e) {
+          console.error("Font load error:", fonts[i].name, e);
+        }
+      }
+    }
+
+    function updatePreview() {
+      preview.style.fontFamily = fontSelect.value || "inherit";
+      preview.style.color = colorPicker.value;
+      preview.style.fontSize = fontSize.value + "px";
+      preview.textContent = userText.value || "اكتب نص للمعاينة...";
+    }
+
+    function setTheme(mode) {
+      document.body.classList.toggle("dark", mode === "dark");
+      themeIcon.textContent = mode === "dark" ? "🌙" : "🌞";
+      localStorage.setItem("theme", mode);
+    }
+
+    themeToggle.addEventListener("click", () => {
+      const newMode = document.body.classList.contains("dark") ? "light" : "dark";
+      setTheme(newMode);
+    });
+
+    window.addEventListener("load", () => {
+      const savedTheme = localStorage.getItem("theme");
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const theme = savedTheme || (prefersDark ? "dark" : "light");
+      setTheme(theme);
+      loadFonts();
+      updatePreview();
+    });
+
+    [userText, fontSelect, colorPicker, fontSize].forEach(el =>
+      el.addEventListener("input", updatePreview)
+    );
+  </script>
+</body>
+</html>
