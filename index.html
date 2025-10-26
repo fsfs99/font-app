@@ -1,213 +1,85 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Font Preview App</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Font Preview — Modern UI</title>
   <style>
-    :root {
-      --bg-light: #f7f9fc;
-      --bg-dark: #0e1117;
-      --text-light: #111;
-      --text-dark: #eee;
-      --accent: #4a90e2;
-      --transition-speed: 0.6s;
+    :root{
+      --bg:#0f1724;
+      --card:#0b1220;
+      --muted:#9aa4b2;
+      --accent-1: linear-gradient(135deg,#7c3aed 0%,#06b6d4 100%);
+      --glass: rgba(255,255,255,0.04);
+      --glass-2: rgba(255,255,255,0.03);
+      --radius:14px;
+      --ease: 300ms cubic-bezier(.25,.8,.25,1);
+      --text:#e6eef6;
+      --logo-size:56px;
     }
 
-    body {
-      font-family: "Segoe UI", sans-serif;
-      background-color: var(--bg-light);
-      color: var(--text-light);
-      margin: 0;
-      padding: 20px;
-      transition: background-color var(--transition-speed), color var(--transition-speed);
-    }
+    body[data-theme='light']{--bg:#f6f8fb;--card:#ffffff;--muted:#6b7280;--glass:rgba(2,6,23,0.04);--text:#0b1220;}
 
-    body.dark {
-      background-color: var(--bg-dark);
-      color: var(--text-dark);
-    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial;color:var(--text);background:var(--bg);transition:background var(--ease),color var(--ease);}
 
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 30px;
-    }
+    .app{max-width:1200px;margin:28px auto;padding:24px;display:grid;grid-template-columns:360px 1fr;gap:20px;transition:all var(--ease);}
 
-    header h1 {
-      font-size: 2rem;
-      margin: 0;
-    }
+    header{grid-column:1/-1;display:flex;align-items:center;gap:14px;justify-content:space-between}
+    .logo{width:var(--logo-size);height:var(--logo-size);border-radius:12px;background:var(--accent-1);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;box-shadow:0 8px 30px rgba(12,18,40,0.18);animation:float 6s ease-in-out infinite}
+    @keyframes float{0%{transform:translateY(0)}50%{transform:translateY(-6px) rotate(-2deg)}100%{transform:translateY(0)}}
 
-    header button {
-      padding: 8px 14px;
-      background-color: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: transform 0.3s;
-    }
+    .theme-toggle{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;background:var(--glass);border:1px solid rgba(255,255,255,0.05);color:var(--muted);cursor:pointer;transition:all var(--ease);font-size:14px;user-select:none;}
+    .theme-toggle:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.1)}
+    .theme-toggle span{display:inline-flex;align-items:center;justify-content:center;font-size:18px;transition:transform 0.4s ease,opacity 0.4s ease;}
+    .theme-toggle .icon-light{opacity:0;transform:scale(0.6) rotate(-30deg);}
+    body[data-theme='light'] .theme-toggle .icon-light{opacity:1;transform:scale(1) rotate(0deg);}
+    body[data-theme='light'] .theme-toggle .icon-dark{opacity:0;transform:scale(0.6) rotate(30deg);}
 
-    header button:hover {
-      transform: scale(1.05);
-    }
-
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-      justify-content: center;
-      max-width: 1000px;
-      margin: 0 auto;
-    }
-
-    textarea,
-    select,
-    input[type="color"],
-    input[type="range"] {
-      padding: 8px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      background-color: inherit;
-      color: inherit;
-      font-size: 1rem;
-      box-sizing: border-box;
-    }
-
-    textarea {
-      width: 100%;
-      min-height: 120px;
-    }
-
-    #preview {
-      margin: 30px auto 0;
-      border-radius: 12px;
-      padding: 20px;
-      border: 1px solid #ddd;
-      min-height: 150px;
-      font-size: 24px;
-      text-align: center;
-      max-width: 1000px;
-      transition: all var(--transition-speed);
-      background-color: rgba(0,0,0,0.02);
-    }
-
-    body.dark #preview {
-      border-color: #333;
-      background-color: rgba(255,255,255,0.05);
-    }
-
-    /* ====== DESKTOP STYLES ====== */
-    @media (min-width: 992px) {
-      body {
-        padding: 40px;
-      }
-      header h1 {
-        font-size: 2.4rem;
-      }
-      #preview {
-        font-size: 28px;
-        padding: 30px;
-      }
-      .controls textarea {
-        min-height: 150px;
-      }
-    }
-
-    /* ====== MOBILE STYLES ====== */
-    @media (max-width: 768px) {
-      header h1 {
-        font-size: 1.6rem;
-      }
-      #preview {
-        font-size: 20px;
-      }
-      .controls {
-        flex-direction: column;
-        gap: 12px;
-      }
-    }
+    @media (max-width:900px){.app{grid-template-columns:1fr}.logo{width:44px;height:44px}}
   </style>
 </head>
 <body>
-  <header>
-    <h1>🎨 Font Preview</h1>
-    <button id="theme-toggle"><span id="theme-icon">🌞</span> تبديل الثيم</button>
-  </header>
-
-  <div class="controls">
-    <textarea id="user-text">الخط السريع قفز فوق الكلب الكسول.</textarea>
-    <select id="font-select"><option value="">اختر الخط</option></select>
-    <input type="color" id="color-picker" title="لون النص">
-    <input type="range" id="font-size" min="12" max="80" value="24" title="حجم الخط">
+  <div class="app">
+    <header>
+      <div style="display:flex;align-items:center;gap:14px">
+        <div class="logo">FG</div>
+        <div>
+          <h1 style="font-size:20px;margin:0">Font Preview — Modern UI</h1>
+          <p style="color:var(--muted);font-size:13px;margin:0">Smooth controls for color, size, spacing, alignment and styling.</p>
+        </div>
+      </div>
+      <div id="theme-toggle" class="theme-toggle">
+        <span class="icon-dark">🌙</span>
+        <span class="icon-light">🌞</span>
+        <span class="label">Toggle Theme</span>
+      </div>
+    </header>
   </div>
 
-  <div id="preview">سيظهر المعاينة هنا.</div>
-
   <script>
-    const fonts = [
-      { name: "Tasees Bold", url: "https://cdn.jsdelivr.net/gh/fsfs99/font-app@main/fonts/alfont_com_Tasees-Bold.ttf" },
-      { name: "All Genders Regular v4", url: "https://cdn.jsdelivr.net/gh/fsfs99/font-app@main/fonts/alfont_com_All-Genders-Regular-v4.otf" },
-      { name: "Pdms Saleem Quranfont", url: "https://cdn.jsdelivr.net/gh/fsfs99/font-app@main/fonts/alfont_com_AlFont_com_pdms-saleem-quranfont.ttf" },
-    ];
+    const themeToggle=document.getElementById('theme-toggle');
 
-    const fontSelect = document.getElementById("font-select");
-    const userText = document.getElementById("user-text");
-    const preview = document.getElementById("preview");
-    const colorPicker = document.getElementById("color-picker");
-    const fontSize = document.getElementById("font-size");
-    const themeToggle = document.getElementById("theme-toggle");
-    const themeIcon = document.getElementById("theme-icon");
-
-    async function loadFonts() {
-      for (let i = 0; i < fonts.length; i++) {
-        try {
-          const res = await fetch(fonts[i].url);
-          const buffer = await res.arrayBuffer();
-          const fontFace = new FontFace(`font-${i}`, buffer);
-          await fontFace.load();
-          document.fonts.add(fontFace);
-          const opt = document.createElement("option");
-          opt.value = `font-${i}`;
-          opt.textContent = fonts[i].name;
-          fontSelect.appendChild(opt);
-        } catch (e) {
-          console.error("Font load error:", fonts[i].name, e);
-        }
-      }
+    function setTheme(name){
+      document.body.setAttribute('data-theme',name);
+      localStorage.setItem('fg-theme',name);
     }
 
-    function updatePreview() {
-      preview.style.fontFamily = fontSelect.value || "inherit";
-      preview.style.color = colorPicker.value;
-      preview.style.fontSize = fontSize.value + "px";
-      preview.textContent = userText.value || "اكتب نص للمعاينة...";
+    function toggleTheme(){
+      const current=document.body.getAttribute('data-theme');
+      const next=current==='light'?'dark':'light';
+      document.body.style.transition='background 0.4s ease, color 0.4s ease';
+      setTheme(next);
     }
 
-    function setTheme(mode) {
-      document.body.classList.toggle("dark", mode === "dark");
-      themeIcon.textContent = mode === "dark" ? "🌙" : "🌞";
-      localStorage.setItem("theme", mode);
-    }
+    if(themeToggle) themeToggle.addEventListener('click',toggleTheme);
 
-    themeToggle.addEventListener("click", () => {
-      const newMode = document.body.classList.contains("dark") ? "light" : "dark";
-      setTheme(newMode);
-    });
-
-    window.addEventListener("load", () => {
-      const savedTheme = localStorage.getItem("theme");
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      setTheme(savedTheme || (prefersDark ? "dark" : "light"));
-      loadFonts();
-      updatePreview();
-    });
-
-    [userText, fontSelect, colorPicker, fontSize].forEach(el =>
-      el.addEventListener("input", updatePreview)
-    );
+    (function initTheme(){
+      const saved=localStorage.getItem('fg-theme');
+      if(saved){setTheme(saved);return;}
+      const prefersLight=window.matchMedia('(prefers-color-scheme: light)').matches;
+      setTheme(prefersLight?'light':'dark');
+    })();
   </script>
 </body>
 </html>
