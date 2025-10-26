@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Font Preview — Modern UI</title>
+  <style>
+    :root{
+      --bg:#0f1724; /* dark navy */
+      --card:#0b1220;
+      --muted:#9aa4b2;
+      --accent-1: linear-gradient(135deg,#7c3aed 0%,#06b6d4 100%);
+      --glass: rgba(255,255,255,0.04);
+      --glass-2: rgba(255,255,255,0.03);
+      --radius:14px;
+      --ease: 240ms cubic-bezier(.2,.9,.3,1);
+      --text:#e6eef6;
+      --logo-size:56px;
+    }
+
+    /* Light theme overrides */
+    body[data-theme='light']{ --bg: #f6f8fb; --card: #ffffff; --muted: #6b7280; --glass: rgba(2,6,23,0.04); --text: #0b1220; }
+
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;color:var(--text);background:radial-gradient(1200px 600px at 10% 10%, rgba(12,18,28,0.06), transparent), radial-gradient(1000px 500px at 90% 90%, rgba(6,11,21,0.05), transparent), var(--bg);transition:background var(--ease), color var(--ease)}
+
+    /* reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      :root{ --ease: 50ms linear; }
+      *{transition:none!important}
+    }
+
+    .app{max-width:1200px;margin:28px auto;padding:24px;display:grid;grid-template-columns:360px 1fr;gap:20px}
+
+    header{grid-column:1/-1;display:flex;align-items:center;gap:14px}
+    .logo{width:var(--logo-size);height:var(--logo-size);border-radius:12px;background:var(--accent-1);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;box-shadow:0 8px 30px rgba(12,18,40,0.18);transform-origin:center;animation:logoFloat 6s ease-in-out infinite}
+    @keyframes logoFloat{0%{transform:translateY(0)}50%{transform:translateY(-6px) rotate(-2deg)}100%{transform:translateY(0)}}
+
+    h1{font-size:20px;margin:0}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
+
+    /* controls */
+    .panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:var(--radius);padding:18px;box-shadow:0 10px 30px rgba(2,6,23,0.06);border:1px solid rgba(255,255,255,0.03);transition:box-shadow var(--ease), transform var(--ease)}
+    body[data-theme='light'] .panel{background:linear-gradient(180deg, rgba(2,6,23,0.01), rgba(2,6,23,0.01));box-shadow:0 8px 20px rgba(2,6,23,0.04);border:1px solid rgba(2,6,23,0.04)}
+    .section{margin-bottom:14px}
+    label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+
+    /* base input styles */
+    select, textarea, input[type='color']{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;outline:none;transition:border-color var(--ease), box-shadow var(--ease)}
+    body[data-theme='light'] select, body[data-theme='light'] textarea{border:1px solid rgba(2,6,23,0.06); background:transparent}
+
+    /* Dark-mode only: make selects visibly darker (keeps light mode unchanged) */
+    body[data-theme='dark'] select, body[data-theme='dark'] textarea{background: rgba(0,0,0,0.45);border: 1px solid rgba(255,255,255,0.03);}
+
+    textarea{min-height:88px;resize:vertical;padding:12px;font-size:16px}
+
+    .row{display:flex;gap:10px}
+    .col{flex:1}
+
+    .range{display:flex;align-items:center;gap:12px}
+    .range input[type='range']{flex:1;-webkit-appearance:none;height:6px;background:linear-gradient(90deg,#3b82f6, #7c3aed);border-radius:8px;outline:none}
+    .range output{min-width:46px;text-align:right;font-size:13px;color:var(--muted)}
+
+    .toggle{display:inline-flex;align-items:center;gap:8px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;background:var(--glass);border-radius:10px;border:1px solid rgba(255,255,255,0.03);cursor:pointer;color:var(--muted);transition:all var(--ease);user-select:none}
+    .btn:hover{transform:translateY(-4px);box-shadow:0 10px 30px rgba(7,10,20,0.06)}
+    .btn.active{background:linear-gradient(90deg,rgba(124,58,237,0.18), rgba(6,182,212,0.08));color:var(--text);border:1px solid rgba(124,58,237,0.22);box-shadow:0 8px 28px rgba(7,10,20,0.08)}
+
+    /* preview area */
+    .preview-wrap{display:flex;flex-direction:column;gap:12px}
+    .preview-card{flex:1;min-height:320px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:28px;border-radius:18px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 14px 60px rgba(2,6,23,0.08);display:flex;flex-direction:column;justify-content:center;align-items:stretch;transition:transform var(--ease), box-shadow var(--ease), opacity var(--ease)}
+    body[data-theme='light'] .preview-card{background:linear-gradient(180deg, rgba(2,6,23,0.01), rgba(2,6,23,0.01));box-shadow:0 6px 18px rgba(2,6,23,0.04)}
+
+    /* animation when updating font */
+    .preview-card.is-updating{opacity:0.45;transform:translateY(8px) scale(0.996)}
+
+    .preview-text{width:100%;min-height:140px;outline:none;border:none;background:transparent;color:inherit;font-size:28px;line-height:1.2;transition:all var(--ease);word-break:break-word}
+
+    .controls-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+    .muted-sm{font-size:12px;color:var(--muted)}
+
+    footer.note{grid-column:1/-1;margin-top:6px;color:var(--muted);font-size:13px}
+
+    .color-preview{width:18px;height:18px;border-radius:50%;border:1px solid rgba(255,255,255,0.12);display:inline-block;margin-left:6px;vertical-align:middle}
+
+    /* small screen */
+    @media (max-width:900px){.app{grid-template-columns:1fr;}.logo{width:44px;height:44px}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="logo">FG</div>
+      <div>
+        <h1>Font Preview — Modern UI</h1>
+        <p class="lead">Smooth controls for color, size, spacing, alignment and styling. Choose from the provided fonts.</p>
+      </div>
+
+      <div class="header-actions">
+        <div id="theme-toggle" class="theme-toggle btn" title="Toggle theme">Toggle theme</div>
+      </div>
+    </header>
+
+    <!-- LEFT: controls -->
+    <aside class="panel">
+      <div class="section">
+        <label for="font-select">Choose a font</label>
+        <select id="font-select"><option value="">-- choose a font --</option></select>
+        <div style="height:8px"></div>
+        <div class="muted-sm" id="font-hint">Select a font — fonts load from GitHub and fallback to system if they can't be fetched.</div>
+      </div>
+
+      <div class="section">
+        <label for="text-input">Sample text</label>
+        <textarea id="text-input">الخط العربي جميل — The quick brown fox jumps over the lazy dog.</textarea>
+      </div>
+
+      <div class="section">
+        <label>Appearance</label>
+        <div class="row">
+          <div class="col">
+            <label class="muted-sm">Text color <span id="text-color-preview" class="color-preview"></span></label>
+            <input id="text-color" type="color" value="#e6eef6" />
+          </div>
+          <div class="col">
+            <label class="muted-sm">Background <span id="bg-color-preview" class="color-preview"></span></label>
+            <input id="bg-color" type="color" value="#071024" />
+          </div>
+        </div>
+
+        <div style="height:10px"></div>
+        <div class="range">
+          <label class="muted-sm">Size</label>
+          <input id="size-range" type="range" min="12" max="160" value="32" />
+          <output id="size-out">32px</output>
+        </div>
+
+        <div style="height:10px"></div>
+        <div class="range">
+          <label class="muted-sm">Letter / Word spacing</label>
+          <input id="letter-range" type="range" min="-8" max="32" value="0" />
+          <output id="letter-out">0px</output>
+        </div>
+
+        <div style="height:10px"></div>
+        <div class="range">
+          <label class="muted-sm">Line height</label>
+          <input id="line-range" type="range" min="1" max="3" step="0.05" value="1.2" />
+          <output id="line-out">1.20</output>
+        </div>
+      </div>
+
+      <div class="section">
+        <label>Text controls</label>
+        <div class="row">
+          <button id="align-left" class="btn active" title="Align left">Left</button>
+          <button id="align-center" class="btn" title="Align center">Center</button>
+          <button id="align-right" class="btn" title="Align right">Right</button>
+        </div>
+        <div style="height:10px"></div>
+        <div class="row">
+          <button id="toggle-bold" class="btn" title="Toggle bold">Bold</button>
+          <button id="toggle-italic" class="btn" title="Toggle italic">Italic</button>
+          <button id="reset" class="btn" title="Reset settings">Reset</button>
+        </div>
+      </div>
+
+      <div class="section muted-sm">
+        <div>Progress: <span id="load-status">Waiting</span></div>
+      </div>
+
+    </aside>
+
+    <!-- RIGHT: preview -->
+    <main class="preview-wrap">
+      <div class="preview-card" id="preview-card">
+        
+        <div contenteditable="true" id="preview-text" class="preview-text" spellcheck="false" dir="auto">الخط العربي جميل — The quick brown fox jumps over the lazy dog.</div>
+      </div>
+
+      <div class="controls-grid panel">
+        <div class="muted-sm">Tip: Click the preview to edit it directly.</div>
+        <div class="muted-sm">Fonts provided by the site — select any of the 7 fonts.</div>
+        <div class="muted-sm">Supports TTF/OTF/WOFF/WOFF2 – remote fonts loaded via fetch.</div>
+      </div>
+
+      <footer class="note">Made modern — adjust settings and enjoy the smooth preview.</footer>
+    </main>
+  </div>
+
+  <script>
+    // ---------- Configuration: remote fonts (raw.githubusercontent) ----------
+    const remoteFontUrls = [
+      'https://raw.githubusercontent.com/fsfs99/font-app/main/fonts/alfont_com_Tasees-Bold.ttf',
+      'https://raw.githubusercontent.com/fsfs99/font-app/main/fonts/alfont_com_All-Genders-Regular-v4.otf',
+      'https://raw.githubusercontent.com/fsfs99/font-app/main/fonts/alfont_com_AlFont_com_pdms-saleem-quranfont.ttf',
+      'https://raw.githubusercontent.com/fsfs99/font-app/main/fonts/alfont_com_AlFont_com_GE-Thuluth-Light_10%20(1).otf',
+      'https://raw.githubusercontent.com/fsfs99/font-app/main/fonts/alfont_com_AlFont_com_AM_Thulth_Regular_0.1.ttf',
+      'https://raw.githubusercontent.com/fsfs99/font-app/main/fonts/Sanabel-Khebrat-Musamem-2021.otf',
+      'https://raw.githubusercontent.com/fsfs99/font-app/main/fonts/101-Spirit-Of-Doha-Black-1.otf'
+    ];
+    const remoteFontNames = [
+      'Tasees Bold', 'All Genders Regular v4', 'Pdms Saleem Quranfont', 'GE Thuluth Light 10', 'AM Thulth Regular 0.1', 'Sanabel Khebrat Musamem 2021', 'Spirit Of Doha Black 1'
+    ];
+
+    // ---------- DOM refs ----------
+    const fontSelect = document.getElementById('font-select');
+    const textInput = document.getElementById('text-input');
+    const previewText = document.getElementById('preview-text');
+    const previewCard = document.getElementById('preview-card');
+    const previewColorChip = document.getElementById('preview-color-chip');
+    const textColor = document.getElementById('text-color');
+    const bgColor = document.getElementById('bg-color');
+    const sizeRange = document.getElementById('size-range');
+    const sizeOut = document.getElementById('size-out');
+    const letterRange = document.getElementById('letter-range');
+    const letterOut = document.getElementById('letter-out');
+    const lineRange = document.getElementById('line-range');
+    const lineOut = document.getElementById('line-out');
+    const alignLeft = document.getElementById('align-left');
+    const alignCenter = document.getElementById('align-center');
+    const alignRight = document.getElementById('align-right');
+    const toggleBold = document.getElementById('toggle-bold');
+    const toggleItalic = document.getElementById('toggle-italic');
+    const resetBtn = document.getElementById('reset');
+    const loadStatus = document.getElementById('load-status');
+    const themeToggle = document.getElementById('theme-toggle');
+    const textColorPreview = document.getElementById('text-color-preview');
+    const bgColorPreview = document.getElementById('bg-color-preview');
+
+    // loaded fonts registry
+    const fonts = {};
+
+    function populateFontSelect(){
+      for(let i=0;i<remoteFontUrls.length;i++){
+        const opt=document.createElement('option');opt.value=`remote-${i}`;opt.textContent=remoteFontNames[i];fontSelect.appendChild(opt);
+      }
+      const sysOpt=document.createElement('option');sysOpt.value='system';sysOpt.textContent='System UI (default)';fontSelect.appendChild(sysOpt);
+    }
+    populateFontSelect();
+
+    // helper: fetch with timeout using AbortController
+    async function fetchWithTimeout(url, timeout = 10000){
+      const ac = new AbortController();
+      const id = setTimeout(()=> ac.abort(), timeout);
+      try{
+        const resp = await fetch(url, { signal: ac.signal });
+        clearTimeout(id);
+        return resp;
+      }catch(err){
+        clearTimeout(id);
+        throw err;
+      }
+    }
+
+    // Load a remote font via fetch -> blob -> FontFace
+    async function loadRemoteFont(index){
+      const name = `remote-font-${index}`;
+      if(fonts[name]) return name; // already loaded
+      const url = remoteFontUrls[index];
+      updateStatus(`Loading ${remoteFontNames[index]}...`);
+      try{
+        // If offline, skip trying to fetch
+        if(!navigator.onLine){
+          updateStatus('Offline — using system fallback');
+          return null;
+        }
+        const resp = await fetchWithTimeout(url, 10000);
+        if(!resp.ok) {
+          updateStatus(`HTTP ${resp.status} — using fallback`);
+          console.warn('Font fetch failed:', resp.status, url);
+          return null;
+        }
+        const arrayBuffer = await resp.arrayBuffer();
+        const blob = new Blob([arrayBuffer]);
+        const blobUrl = URL.createObjectURL(blob);
+        const ff = new FontFace(name, `url(${blobUrl})`);
+        await ff.load();
+        document.fonts.add(ff);
+        fonts[name] = {face:ff, blobUrl, label: remoteFontNames[index]};
+        updateStatus(`${remoteFontNames[index]} loaded`);
+        return name;
+      }catch(err){
+        // Do NOT re-throw — handle gracefully and fallback to system font
+        console.error('Font load failed:', err, url);
+        updateStatus('Network error loading font — using system fallback');
+        return null;
+      }
+    }
+
+    function updateStatus(msg){
+      if(loadStatus) loadStatus.textContent = msg;
+      console.info('Status:', msg);
+    }
+
+    // detect Arabic presence (simpler, reliable range)
+    function containsArabic(text){
+      return /[\u0600-\u06FF]/.test(text);
+    }
+
+    // UI Updates
+    function applyStyles(){
+      // text sync
+      const text = (textInput && textInput.value) || (previewText && previewText.textContent) || ' ';
+      if(previewText) previewText.textContent = text;
+
+      // colors
+      if(previewText) previewText.style.color = (textColor && textColor.value) || '#e6eef6';
+      if(previewCard) previewCard.style.background = `linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01)), ${(bgColor && bgColor.value) || '#071024'}`;
+      if(previewColorChip) previewColorChip.style.background = (textColor && textColor.value) || '#e6eef6';
+      if(textColorPreview) textColorPreview.style.background = (textColor && textColor.value) || '#e6eef6';
+      if(bgColorPreview) bgColorPreview.style.background = (bgColor && bgColor.value) || '#071024';
+
+      // size
+      if(previewText) previewText.style.fontSize = (sizeRange && sizeRange.value) + 'px';
+      if(sizeOut) sizeOut.textContent = (sizeRange && sizeRange.value) + 'px';
+
+      // spacing: word-spacing for Arabic, letter-spacing for Latin
+      const spacingVal = parseFloat((letterRange && letterRange.value) || '0');
+      if(previewText){
+        if(containsArabic(text)){
+          previewText.style.letterSpacing = '';
+          previewText.style.wordSpacing = spacingVal + 'px';
+        } else {
+          previewText.style.wordSpacing = '';
+          previewText.style.letterSpacing = spacingVal + 'px';
+        }
+      }
+      if(letterOut) letterOut.textContent = spacingVal + 'px';
+
+      // line height
+      if(previewText) previewText.style.lineHeight = (lineRange && lineRange.value) || '1.2';
+      if(lineOut) lineOut.textContent = parseFloat((lineRange && lineRange.value) || '1.2').toFixed(2);
+    }
+
+    // alignment helpers
+    function setAlign(which){
+      if(previewText) previewText.style.textAlign = which;
+      [alignLeft,alignCenter,alignRight].forEach(b=>{ if(b) b.classList.remove('active') });
+      if(which==='left' && alignLeft) alignLeft.classList.add('active');
+      if(which==='center' && alignCenter) alignCenter.classList.add('active');
+      if(which==='right' && alignRight) alignRight.classList.add('active');
+    }
+
+    // Bold / Italic toggle
+    function setBold(active){ if(previewText) previewText.style.fontWeight = active ? '700' : '400'; if(toggleBold) toggleBold.classList.toggle('active', active); }
+    function setItalic(active){ if(previewText) previewText.style.fontStyle = active ? 'italic' : 'normal'; if(toggleItalic) toggleItalic.classList.toggle('active', active); }
+
+    // Reset
+    function resetAll(){
+      if(textInput) textInput.value = 'The quick brown fox jumps over the lazy dog. 0123456789';
+      if(textColor) textColor.value = '#e6eef6';
+      if(bgColor) bgColor.value = '#071024';
+      if(sizeRange) sizeRange.value = 32; if(letterRange) letterRange.value = 0; if(lineRange) lineRange.value = 1.2;
+      setAlign('left'); setBold(false); setItalic(false);
+      if(fontSelect) fontSelect.value = 'system';
+      applyStyles();
+    }
+
+    // Event wiring (defensive)
+    if(textInput) textInput.addEventListener('input', applyStyles);
+    if(previewText) previewText.addEventListener('input', ()=>{ if(textInput) textInput.value = previewText.textContent; applyStyles(); });
+    if(textColor) textColor.addEventListener('input', applyStyles);
+    if(bgColor) bgColor.addEventListener('input', applyStyles);
+    if(sizeRange) sizeRange.addEventListener('input', applyStyles);
+    if(letterRange) letterRange.addEventListener('input', applyStyles);
+    if(lineRange) lineRange.addEventListener('input', applyStyles);
+
+    if(alignLeft) alignLeft.addEventListener('click', ()=>setAlign('left'));
+    if(alignCenter) alignCenter.addEventListener('click', ()=>setAlign('center'));
+    if(alignRight) alignRight.addEventListener('click', ()=>setAlign('right'));
+
+    let boldState=false, italicState=false;
+    if(toggleBold) toggleBold.addEventListener('click', ()=>{ boldState=!boldState; setBold(boldState); });
+    if(toggleItalic) toggleItalic.addEventListener('click', ()=>{ italicState=!italicState; setItalic(italicState); });
+    if(resetBtn) resetBtn.addEventListener('click', resetAll);
+
+    // helper to animate preview when changing fonts
+    function flashPreview(){
+      if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      if(previewCard) previewCard.classList.add('is-updating');
+      setTimeout(()=>{ if(previewCard) previewCard.classList.remove('is-updating') }, 220);
+    }
+
+    // Theme toggle
+    function setTheme(name){
+      document.body.setAttribute('data-theme', name);
+      localStorage.setItem('fg-theme', name);
+      const label = name === 'light' ? '🌞 Light' : '🌙 Dark';
+      if(themeToggle) themeToggle.textContent = label;
+    }
+    if(themeToggle) themeToggle.addEventListener('click', ()=>{
+      const current = document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      setTheme(current);
+      applyStyles();
+    });
+
+    // Font select change
+    if(fontSelect) fontSelect.addEventListener('change', async (e)=>{
+      const v = e.target.value;
+      if(!v) return;
+      updateStatus('Applying font...');
+      try{
+        if(v === 'system'){
+          flashPreview();
+          if(previewText) previewText.style.fontFamily = 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif';
+        } else if(v.startsWith('remote-')){
+          const idx = parseInt(v.split('-')[1],10);
+          const name = await loadRemoteFont(idx);
+          flashPreview();
+          if(name){
+            // apply loaded font family
+            if(previewText) previewText.style.fontFamily = `${name}, system-ui, -apple-system, 'Segoe UI', Roboto, Arial`;
+            updateStatus('Font applied');
+          } else {
+            // fallback to system if loading failed
+            if(previewText) previewText.style.fontFamily = 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif';
+            updateStatus('Using system fallback');
+          }
+        } else {
+          flashPreview();
+          if(previewText) previewText.style.fontFamily = v;
+          updateStatus('Font applied');
+        }
+      }catch(err){
+        console.error('Unexpected error applying font', err);
+        updateStatus('Error applying font — using fallback');
+        if(previewText) previewText.style.fontFamily = 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif';
+      }
+    });
+
+    // init
+    (function init(){
+      // default theme from localStorage or prefer-color-scheme
+      const saved = localStorage.getItem('fg-theme');
+      if(saved) setTheme(saved);
+      else if(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) setTheme('light');
+      else setTheme('dark');
+
+      // default states
+      resetAll();
+      updateStatus('Ready');
+
+      // show online/offline changes
+      window.addEventListener('online', ()=> updateStatus('Back online — you can load fonts'));
+      window.addEventListener('offline', ()=> updateStatus('Offline — fonts will fallback to system'));
+    })();
+
+  </script>
+</body>
+</html>
