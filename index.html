@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Font Preview App</title>
+  <style>
+    :root {
+      --bg-light: #f7f9fc;
+      --bg-dark: #0e1117;
+      --text-light: #111;
+      --text-dark: #eee;
+      --accent: #4a90e2;
+      --transition-speed: 0.6s;
+    }
+
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background-color: var(--bg-light);
+      color: var(--text-light);
+      margin: 0;
+      padding: 20px;
+      transition: background-color var(--transition-speed), color var(--transition-speed);
+    }
+
+    body.dark {
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      margin: 0;
+    }
+
+    header button {
+      padding: 8px 14px;
+      background-color: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    header button:hover {
+      transform: scale(1.05);
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    textarea,
+    select,
+    input[type="color"],
+    input[type="range"] {
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      background-color: inherit;
+      color: inherit;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 120px;
+    }
+
+    #preview {
+      margin: 30px auto 0;
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid #ddd;
+      min-height: 150px;
+      font-size: 24px;
+      text-align: center;
+      max-width: 1000px;
+      transition: all var(--transition-speed);
+      background-color: rgba(0,0,0,0.02);
+    }
+
+    body.dark #preview {
+      border-color: #333;
+      background-color: rgba(255,255,255,0.05);
+    }
+
+    /* ====== DESKTOP STYLES ====== */
+    @media (min-width: 992px) {
+      body {
+        padding: 40px;
+      }
+      header h1 {
+        font-size: 2.4rem;
+      }
+      #preview {
+        font-size: 28px;
+        padding: 30px;
+      }
+      .controls textarea {
+        min-height: 150px;
+      }
+    }
+
+    /* ====== MOBILE STYLES ====== */
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 1.6rem;
+      }
+      #preview {
+        font-size: 20px;
+      }
+      .controls {
+        flex-direction: column;
+        gap: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🎨 Font Preview</h1>
+    <button id="theme-toggle"><span id="theme-icon">🌞</span> تبديل الثيم</button>
+  </header>
+
+  <div class="controls">
+    <textarea id="user-text">الخط السريع قفز فوق الكلب الكسول.</textarea>
+    <select id="font-select"><option value="">اختر الخط</option></select>
+    <input type="color" id="color-picker" title="لون النص">
+    <input type="range" id="font-size" min="12" max="80" value="24" title="حجم الخط">
+  </div>
+
+  <div id="preview">سيظهر المعاينة هنا.</div>
+
+  <script>
+    const fonts = [
+      { name: "Tasees Bold", url: "https://cdn.jsdelivr.net/gh/fsfs99/font-app@main/fonts/alfont_com_Tasees-Bold.ttf" },
+      { name: "All Genders Regular v4", url: "https://cdn.jsdelivr.net/gh/fsfs99/font-app@main/fonts/alfont_com_All-Genders-Regular-v4.otf" },
+      { name: "Pdms Saleem Quranfont", url: "https://cdn.jsdelivr.net/gh/fsfs99/font-app@main/fonts/alfont_com_AlFont_com_pdms-saleem-quranfont.ttf" },
+    ];
+
+    const fontSelect = document.getElementById("font-select");
+    const userText = document.getElementById("user-text");
+    const preview = document.getElementById("preview");
+    const colorPicker = document.getElementById("color-picker");
+    const fontSize = document.getElementById("font-size");
+    const themeToggle = document.getElementById("theme-toggle");
+    const themeIcon = document.getElementById("theme-icon");
+
+    async function loadFonts() {
+      for (let i = 0; i < fonts.length; i++) {
+        try {
+          const res = await fetch(fonts[i].url);
+          const buffer = await res.arrayBuffer();
+          const fontFace = new FontFace(`font-${i}`, buffer);
+          await fontFace.load();
+          document.fonts.add(fontFace);
+          const opt = document.createElement("option");
+          opt.value = `font-${i}`;
+          opt.textContent = fonts[i].name;
+          fontSelect.appendChild(opt);
+        } catch (e) {
+          console.error("Font load error:", fonts[i].name, e);
+        }
+      }
+    }
+
+    function updatePreview() {
+      preview.style.fontFamily = fontSelect.value || "inherit";
+      preview.style.color = colorPicker.value;
+      preview.style.fontSize = fontSize.value + "px";
+      preview.textContent = userText.value || "اكتب نص للمعاينة...";
+    }
+
+    function setTheme(mode) {
+      document.body.classList.toggle("dark", mode === "dark");
+      themeIcon.textContent = mode === "dark" ? "🌙" : "🌞";
+      localStorage.setItem("theme", mode);
+    }
+
+    themeToggle.addEventListener("click", () => {
+      const newMode = document.body.classList.contains("dark") ? "light" : "dark";
+      setTheme(newMode);
+    });
+
+    window.addEventListener("load", () => {
+      const savedTheme = localStorage.getItem("theme");
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      setTheme(savedTheme || (prefersDark ? "dark" : "light"));
+      loadFonts();
+      updatePreview();
+    });
+
+    [userText, fontSelect, colorPicker, fontSize].forEach(el =>
+      el.addEventListener("input", updatePreview)
+    );
+  </script>
+</body>
+</html>
