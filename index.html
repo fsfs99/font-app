@@ -128,7 +128,7 @@
 
       <div class="section">
         <label for="text-input">Sample text</label>
-        <textarea id="text-input">ضع نصك هنا</textarea>
+        <textarea id="text-input">But your text here - ضع نصك هنا.</textarea>
       </div>
 
       <div class="section">
@@ -190,7 +190,7 @@
     <!-- RIGHT: preview -->
     <main class="preview-wrap">
       <div class="preview-card" id="preview-card">
-        <div contenteditable="true" id="preview-text" class="preview-text" spellcheck="false" dir="auto">ضع نصك هنا</div>
+        <div contenteditable="true" id="preview-text" class="preview-text" spellcheck="false" dir="auto">But your text here - ضع نصك هنا.</div>
       </div>
 
       <div class="controls-grid panel">
@@ -273,4 +273,10 @@
       if(fonts[name]) return name; // already loaded
       const url = remoteFontUrls[index];
       updateStatus(`Loading ${remoteFontNames[index]}...`);
-      try
+      try{
+        // If offline, skip trying to fetch
+        if(!navigator.onLine){
+          updateStatus('Offline — using system fallback');
+          return null;
+        }
+        const resp
