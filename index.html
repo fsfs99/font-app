@@ -128,7 +128,7 @@
 
       <div class="section">
         <label for="text-input">Sample text</label>
-        <textarea id="text-input">الخط العربي جميل — The quick brown fox jumps over the lazy dog.</textarea>
+        <textarea id="text-input">ضع نصك هنا</textarea>
       </div>
 
       <div class="section">
@@ -190,7 +190,7 @@
     <!-- RIGHT: preview -->
     <main class="preview-wrap">
       <div class="preview-card" id="preview-card">
-        <div contenteditable="true" id="preview-text" class="preview-text" spellcheck="false" dir="auto">الخط العربي جميل — The quick brown fox jumps over the lazy dog.</div>
+        <div contenteditable="true" id="preview-text" class="preview-text" spellcheck="false" dir="auto">ضع نصك هنا</div>
       </div>
 
       <div class="controls-grid panel">
@@ -246,4 +246,31 @@
     const fonts = {};
 
     function populateFontSelect(){
-      for(let i=0
+      for(let i=0;i<remoteFontUrls.length;i++){
+        const opt=document.createElement('option');opt.value=`remote-${i}`;opt.textContent=remoteFontNames[i];fontSelect.appendChild(opt);
+      }
+      const sysOpt=document.createElement('option');sysOpt.value='system';sysOpt.textContent='System UI (default)';fontSelect.appendChild(sysOpt);
+    }
+    populateFontSelect();
+
+    // helper: fetch with timeout using AbortController
+    async function fetchWithTimeout(url, timeout = 10000){
+      const ac = new AbortController();
+      const id = setTimeout(()=> ac.abort(), timeout);
+      try{
+        const resp = await fetch(url, { signal: ac.signal });
+        clearTimeout(id);
+        return resp;
+      }catch(err){
+        clearTimeout(id);
+        throw err;
+      }
+    }
+
+    // Load a remote font via fetch -> blob -> FontFace
+    async function loadRemoteFont(index){
+      const name = `remote-font-${index}`;
+      if(fonts[name]) return name; // already loaded
+      const url = remoteFontUrls[index];
+      updateStatus(`Loading ${remoteFontNames[index]}...`);
+      try
