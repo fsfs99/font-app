@@ -83,23 +83,84 @@
 
     .color-preview{width:18px;height:18px;border-radius:50%;border:1px solid rgba(255,255,255,0.12);display:inline-block;margin-left:6px;vertical-align:middle}
 
-    /* small screen (mobile improvements) */
-    @media (max-width:600px){
-      .app{grid-template-columns:1fr; padding:16px; margin:16px auto; gap:16px;}
-      .logo{width:36px; height:36px;}
-      .panel{padding:20px; overflow-y:auto; max-height:70vh;} /* Allow scrolling if needed */
-      .preview-card{min-height:280px; padding:24px;}
-      .preview-text{font-size:24px; line-height:1.4;} /* Better readability */
-      .row{flex-direction:column; gap:12px;} /* Stack buttons vertically for easier tapping */
-      .btn{padding:12px 16px; font-size:14px;} /* Larger touch targets */
-      .range input[type='range']{height:8px;} /* Easier slider interaction */
-      .range{margin:8px 0;} /* More space around sliders */
-      textarea{min-height:100px;} /* Easier typing */
+    /* small screen: enhanced for mobile usability */
+    @media (max-width: 900px) {
+      .app {
+        grid-template-columns: 1fr;
+        padding: 12px;
+        margin: 0;
+        max-width: 100vw;
+      }
+      .logo {
+        width: 44px;
+        height: 44px;
+      }
     }
-    @media (max-width:480px){
-      .preview-text{font-size:22px;} /* Prevent text from being too small */
-      .app{padding:12px;}
-      .btn{font-size:16px;} /* Ensure readable button text */
+
+    @media (max-width: 600px) {
+      .app {
+        display: block;
+        padding: 4px;
+        margin: 0;
+        max-width: 100vw;
+      }
+      aside.panel {
+        margin-bottom: 14px;
+        padding: 10px;
+        border-radius: 10px;
+      }
+      main.preview-wrap {
+        padding: 0;
+      }
+      .preview-card {
+        padding: 12px;
+        border-radius: 12px;
+        min-height: 120px;
+      }
+      .preview-text {
+        font-size: 18px;
+        min-height: 60px;
+        padding: 6px 0;
+      }
+      .controls-grid.panel {
+        grid-template-columns: 1fr;
+        gap: 6px;
+        margin-top: 4px;
+        padding: 8px;
+        border-radius: 10px;
+      }
+      .btn, select, textarea, input[type='color'] {
+        font-size: 16px;
+        padding: 13px;
+        min-height: 44px;
+      }
+      .range input[type='range'] {
+        height: 14px;
+      }
+      .row {
+        flex-direction: column;
+        gap: 6px;
+      }
+      .col {
+        width: 100%;
+      }
+      label, .muted-sm {
+        font-size: 15px;
+      }
+      body, html {
+        overflow-x: hidden;
+        width: 100vw;
+      }
+    }
+
+    /* Prevent horizontal scroll and overflow everywhere */
+    body, html {
+      overflow-x: hidden;
+      width: 100vw;
+    }
+    .app, .preview-wrap, .panel {
+      max-width: 100vw;
+      box-sizing: border-box;
     }
   </style>
 </head>
@@ -128,7 +189,7 @@
 
       <div class="section">
         <label for="text-input">Sample text</label>
-        <textarea id="text-input">But your text here - ضع نصك هنا.</textarea>
+        <textarea id="text-input">الخط العربي جميل — The quick brown fox jumps over the lazy dog.</textarea>
       </div>
 
       <div class="section">
@@ -190,7 +251,8 @@
     <!-- RIGHT: preview -->
     <main class="preview-wrap">
       <div class="preview-card" id="preview-card">
-        <div contenteditable="true" id="preview-text" class="preview-text" spellcheck="false" dir="auto">But your text here - ضع نصك هنا.</div>
+        <div id="preview-color-chip" style="width:36px;height:8px;border-radius:6px;margin-bottom:10px;background:#e6eef6;border:1px solid rgba(0,0,0,0.08)"></div>
+        <div contenteditable="true" id="preview-text" class="preview-text" spellcheck="false" dir="auto">الخط العربي جميل — The quick brown fox jumps over the lazy dog.</div>
       </div>
 
       <div class="controls-grid panel">
@@ -210,7 +272,7 @@
       'https://raw.githubusercontent.com/fsfs99/font-app/main/fonts/alfont_com_All-Genders-Regular-v4.otf',
       'https://raw.githubusercontent.com/fsfs99/font-app/main/fonts/alfont_com_AlFont_com_pdms-saleem-quranfont.ttf',
       'https://raw.githubusercontent.com/fsfs99/font-app/main/fonts/alfont_com_AlFont_com_GE-Thuluth-Light_10%20(1).otf',
-      'https://raw.githubusercontent.com/fsfs99/font-app/main/fonts/alfont_com_AM_Thulth_Regular_0.1.ttf',
+      'https://raw.githubusercontent.com/fsfs99/font-app/main/fonts/alfont_com_AlFont_com_AM_Thulth_Regular_0.1.ttf',
       'https://raw.githubusercontent.com/fsfs99/font-app/main/fonts/Sanabel-Khebrat-Musamem-2021.otf',
       'https://raw.githubusercontent.com/fsfs99/font-app/main/fonts/101-Spirit-Of-Doha-Black-1.otf'
     ];
@@ -223,6 +285,7 @@
     const textInput = document.getElementById('text-input');
     const previewText = document.getElementById('preview-text');
     const previewCard = document.getElementById('preview-card');
+    const previewColorChip = document.getElementById('preview-color-chip');
     const textColor = document.getElementById('text-color');
     const bgColor = document.getElementById('bg-color');
     const sizeRange = document.getElementById('size-range');
@@ -279,4 +342,187 @@
           updateStatus('Offline — using system fallback');
           return null;
         }
-        const resp
+        const resp = await fetchWithTimeout(url, 10000);
+        if(!resp.ok) {
+          updateStatus(`HTTP ${resp.status} — using fallback`);
+          console.warn('Font fetch failed:', resp.status, url);
+          return null;
+        }
+        const arrayBuffer = await resp.arrayBuffer();
+        const blob = new Blob([arrayBuffer]);
+        const blobUrl = URL.createObjectURL(blob);
+        const ff = new FontFace(name, `url(${blobUrl})`);
+        await ff.load();
+        document.fonts.add(ff);
+        fonts[name] = {face:ff, blobUrl, label: remoteFontNames[index]};
+        updateStatus(`${remoteFontNames[index]} loaded`);
+        return name;
+      }catch(err){
+        // Do NOT re-throw — handle gracefully and fallback to system font
+        console.error('Font load failed:', err, url);
+        updateStatus('Network error loading font — using system fallback');
+        return null;
+      }
+    }
+
+    function updateStatus(msg){
+      if(loadStatus) loadStatus.textContent = msg;
+      console.info('Status:', msg);
+    }
+
+    // detect Arabic presence (simpler, reliable range)
+    function containsArabic(text){
+      return /[\u0600-\u06FF]/.test(text);
+    }
+
+    // UI Updates
+    function applyStyles(){
+      // text sync
+      const text = (textInput && textInput.value) || (previewText && previewText.textContent) || ' ';
+      if(previewText) previewText.textContent = text;
+
+      // colors
+      if(previewText) previewText.style.color = (textColor && textColor.value) || '#e6eef6';
+      if(previewCard) previewCard.style.background = `linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01)), ${(bgColor && bgColor.value) || '#071024'}`;
+      if(previewColorChip) previewColorChip.style.background = (textColor && textColor.value) || '#e6eef6';
+      if(textColorPreview) textColorPreview.style.background = (textColor && textColor.value) || '#e6eef6';
+      if(bgColorPreview) bgColorPreview.style.background = (bgColor && bgColor.value) || '#071024';
+
+      // size
+      if(previewText) previewText.style.fontSize = (sizeRange && sizeRange.value) + 'px';
+      if(sizeOut) sizeOut.textContent = (sizeRange && sizeRange.value) + 'px';
+
+      // spacing: word-spacing for Arabic, letter-spacing for Latin
+      const spacingVal = parseFloat((letterRange && letterRange.value) || '0');
+      if(previewText){
+        if(containsArabic(text)){
+          previewText.style.letterSpacing = '';
+          previewText.style.wordSpacing = spacingVal + 'px';
+        } else {
+          previewText.style.wordSpacing = '';
+          previewText.style.letterSpacing = spacingVal + 'px';
+        }
+      }
+      if(letterOut) letterOut.textContent = spacingVal + 'px';
+
+      // line height
+      if(previewText) previewText.style.lineHeight = (lineRange && lineRange.value) || '1.2';
+      if(lineOut) lineOut.textContent = parseFloat((lineRange && lineRange.value) || '1.2').toFixed(2);
+    }
+
+    // alignment helpers
+    function setAlign(which){
+      if(previewText) previewText.style.textAlign = which;
+      [alignLeft,alignCenter,alignRight].forEach(b=>{ if(b) b.classList.remove('active') });
+      if(which==='left' && alignLeft) alignLeft.classList.add('active');
+      if(which==='center' && alignCenter) alignCenter.classList.add('active');
+      if(which==='right' && alignRight) alignRight.classList.add('active');
+    }
+
+    // Bold / Italic toggle
+    function setBold(active){ if(previewText) previewText.style.fontWeight = active ? '700' : '400'; if(toggleBold) toggleBold.classList.toggle('active', active); }
+    function setItalic(active){ if(previewText) previewText.style.fontStyle = active ? 'italic' : 'normal'; if(toggleItalic) toggleItalic.classList.toggle('active', active); }
+
+    // Reset
+    function resetAll(){
+      if(textInput) textInput.value = 'The quick brown fox jumps over the lazy dog. 0123456789';
+      if(textColor) textColor.value = '#e6eef6';
+      if(bgColor) bgColor.value = '#071024';
+      if(sizeRange) sizeRange.value = 32; if(letterRange) letterRange.value = 0; if(lineRange) lineRange.value = 1.2;
+      setAlign('left'); setBold(false); setItalic(false);
+      if(fontSelect) fontSelect.value = 'system';
+      applyStyles();
+    }
+
+    // Event wiring (defensive)
+    if(textInput) textInput.addEventListener('input', applyStyles);
+    if(previewText) previewText.addEventListener('input', ()=>{ if(textInput) textInput.value = previewText.textContent; applyStyles(); });
+    if(textColor) textColor.addEventListener('input', applyStyles);
+    if(bgColor) bgColor.addEventListener('input', applyStyles);
+    if(sizeRange) sizeRange.addEventListener('input', applyStyles);
+    if(letterRange) letterRange.addEventListener('input', applyStyles);
+    if(lineRange) lineRange.addEventListener('input', applyStyles);
+
+    if(alignLeft) alignLeft.addEventListener('click', ()=>setAlign('left'));
+    if(alignCenter) alignCenter.addEventListener('click', ()=>setAlign('center'));
+    if(alignRight) alignRight.addEventListener('click', ()=>setAlign('right'));
+
+    let boldState=false, italicState=false;
+    if(toggleBold) toggleBold.addEventListener('click', ()=>{ boldState=!boldState; setBold(boldState); });
+    if(toggleItalic) toggleItalic.addEventListener('click', ()=>{ italicState=!italicState; setItalic(italicState); });
+    if(resetBtn) resetBtn.addEventListener('click', resetAll);
+
+    // helper to animate preview when changing fonts
+    function flashPreview(){
+      if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      if(previewCard) previewCard.classList.add('is-updating');
+      setTimeout(()=>{ if(previewCard) previewCard.classList.remove('is-updating') }, 220);
+    }
+
+    // Theme toggle
+    function setTheme(name){
+      document.body.setAttribute('data-theme', name);
+      localStorage.setItem('fg-theme', name);
+      const label = name === 'light' ? '🌞 Light' : '🌙 Dark';
+      if(themeToggle) themeToggle.textContent = label;
+    }
+    if(themeToggle) themeToggle.addEventListener('click', ()=>{
+      const current = document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      setTheme(current);
+      applyStyles();
+    });
+
+    // Font select change
+    if(fontSelect) fontSelect.addEventListener('change', async (e)=>{
+      const v = e.target.value;
+      if(!v) return;
+      updateStatus('Applying font...');
+      try{
+        if(v === 'system'){
+          flashPreview();
+          if(previewText) previewText.style.fontFamily = 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif';
+        } else if(v.startsWith('remote-')){
+          const idx = parseInt(v.split('-')[1],10);
+          const name = await loadRemoteFont(idx);
+          flashPreview();
+          if(name){
+            // apply loaded font family
+            if(previewText) previewText.style.fontFamily = `${name}, system-ui, -apple-system, 'Segoe UI', Roboto, Arial`;
+            updateStatus('Font applied');
+          } else {
+            // fallback to system if loading failed
+            if(previewText) previewText.style.fontFamily = 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif';
+            updateStatus('Using system fallback');
+          }
+        } else {
+          flashPreview();
+          if(previewText) previewText.style.fontFamily = v;
+          updateStatus('Font applied');
+        }
+      }catch(err){
+        console.error('Unexpected error applying font', err);
+        updateStatus('Error applying font — using fallback');
+        if(previewText) previewText.style.fontFamily = 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif';
+      }
+    });
+
+    // init
+    (function init(){
+      // default theme from localStorage or prefer-color-scheme
+      const saved = localStorage.getItem('fg-theme');
+      if(saved) setTheme(saved);
+      else if(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) setTheme('light');
+      else setTheme('dark');
+
+      // default states
+      resetAll();
+      updateStatus('Ready');
+
+      // show online/offline changes
+      window.addEventListener('online', ()=> updateStatus('Back online — you can load fonts'));
+      window.addEventListener('offline', ()=> updateStatus('Offline — fonts will fallback to system'));
+    })();
+
+  </script>
+</body>
+</html>
