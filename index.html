@@ -74,73 +74,92 @@
 
     .color-preview{width:18px;height:18px;border-radius:50%;border:1px solid rgba(255,255,255,0.12);display:inline-block;margin-left:6px;vertical-align:middle}
 
-    /* --- Responsive and mobile improvements --- */
-    @media (max-width:900px) {
-      .app {
-        grid-template-columns:1fr;
-        padding:12px;
-        margin:0;
-        max-width:100vw;
-      }
-      .logo {
-        width:44px;
-        height:44px;
-      }
-    }
-
+    /* --- Mobile layout: All components fit in one screen --- */
     @media (max-width:600px) {
+      html, body {
+        overflow-x: hidden;
+        width: 100vw;
+        height: 100vh;
+        margin: 0;
+        padding: 0;
+      }
       .app {
-        display:block;
-        padding:4px;
-        margin:0;
-        max-width:100vw;
+        display: flex;
+        flex-direction: column;
+        padding: 2px;
+        margin: 0;
+        max-width: 100vw;
+        height: 100vh;
+        min-height: 100vh;
+        gap: 4px;
+      }
+      header {
+        flex-shrink: 0;
+        margin-bottom: 2px;
+        gap: 8px;
       }
       aside.panel {
-        margin-bottom:14px;
-        padding:10px;
-        border-radius:10px;
+        margin-bottom: 2px;
+        padding: 5px;
+        border-radius: 8px;
+        min-height: unset;
+        max-height: 38vh;
+        overflow-y: auto;
       }
       main.preview-wrap {
-        padding:0;
+        padding: 0;
+        flex: 1;
+        min-height: unset;
+        max-height: 58vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        overflow-y: auto;
       }
       .preview-card {
-        padding:12px;
-        border-radius:12px;
-        min-height:120px;
+        padding: 7px;
+        border-radius: 8px;
+        min-height: 60px;
+        max-height: 24vh;
+        font-size: 15px;
       }
       .preview-text {
-        font-size:18px;
-        min-height:60px;
-        padding:6px 0;
+        font-size: 15px;
+        min-height: 32px;
+        max-height: 18vh;
+        padding: 4px 0;
+        overflow-y: auto;
       }
       .controls-grid.panel {
-        grid-template-columns:1fr;
-        gap:6px;
-        margin-top:4px;
-        padding:8px;
-        border-radius:10px;
+        grid-template-columns: 1fr;
+        gap: 4px;
+        margin-top: 2px;
+        padding: 5px;
+        border-radius: 8px;
+        font-size: 12px;
       }
       .btn, select, textarea, input[type='color'] {
-        font-size:16px;
-        padding:13px;
-        min-height:44px;
+        font-size: 13px;
+        padding: 8px;
+        min-height: 32px;
+        box-sizing: border-box;
       }
       .range input[type='range'] {
-        height:14px;
+        height: 10px;
       }
       .row {
-        flex-direction:column;
-        gap:6px;
+        flex-direction: column;
+        gap: 4px;
       }
       .col {
-        width:100%;
+        width: 100%;
       }
       label, .muted-sm {
-        font-size:15px;
+        font-size: 13px;
       }
-      body, html {
-        overflow-x:hidden;
-        width:100vw;
+      footer.note {
+        font-size: 11px;
+        margin-bottom: 2px;
       }
     }
 
@@ -178,7 +197,7 @@
 
       <div class="section">
         <label for="text-input">Sample text</label>
-        <textarea id="text-input">But your text here - ضع نصك هنا.</textarea>
+        <textarea id="text-input" placeholder="But your text here - ضع نصك هنا"></textarea>
       </div>
 
       <div class="section">
@@ -239,7 +258,7 @@
     <!-- RIGHT: preview -->
     <main class="preview-wrap">
       <div class="preview-card" id="preview-card">
-        <div contenteditable="true" id="preview-text" class="preview-text" spellcheck="false" dir="auto">But your text here - ضع نصك هنا.</div>
+        <div contenteditable="true" id="preview-text" class="preview-text" spellcheck="false" dir="auto"></div>
       </div>
 
       <div class="controls-grid panel">
@@ -252,6 +271,7 @@
   </div>
 
   <script>
+    // ---------- Configuration: remote fonts (raw.githubusercontent) ----------
     const remoteFontUrls = [
       'https://raw.githubusercontent.com/fsfs99/font-app/main/fonts/alfont_com_Tasees-Bold.ttf',
       'https://raw.githubusercontent.com/fsfs99/font-app/main/fonts/alfont_com_All-Genders-Regular-v4.otf',
@@ -265,6 +285,7 @@
       'Tasees Bold', 'All Genders Regular v4', 'Pdms Saleem Quranfont', 'GE Thuluth Light 10', 'AM Thulth Regular 0.1', 'Sanabel Khebrat Musamem 2021', 'Spirit Of Doha Black 1'
     ];
 
+    // ---------- DOM refs ----------
     const fontSelect = document.getElementById('font-select');
     const textInput = document.getElementById('text-input');
     const previewText = document.getElementById('preview-text');
@@ -386,7 +407,8 @@
     function setItalic(active){ if(previewText) previewText.style.fontStyle = active ? 'italic' : 'normal'; if(toggleItalic) toggleItalic.classList.toggle('active', active); }
 
     function resetAll(){
-      if(textInput) textInput.value = 'But your text here - ضع نصك هنا';
+      if(textInput) textInput.value = '';
+      if(previewText) previewText.textContent = '';
       if(textColor) textColor.value = '#e6eef6';
       if(bgColor) bgColor.value = '#071024';
       if(sizeRange) sizeRange.value = 32; if(letterRange) letterRange.value = 0; if(lineRange) lineRange.value = 1.2;
@@ -395,7 +417,21 @@
       applyStyles();
     }
 
-    if(textInput) textInput.addEventListener('input', applyStyles);
+    // Placeholder handling for textarea, so default text disappears on focus
+    if(textInput) {
+      textInput.addEventListener("focus", function() {
+        if(textInput.value === "") textInput.placeholder = "";
+      });
+      textInput.addEventListener("blur", function() {
+        if(textInput.value === "") textInput.placeholder = "But your text here - ضع نصك هنا";
+      });
+      textInput.addEventListener("input", function() {
+        applyStyles();
+        if(textInput.value !== "") textInput.placeholder = "";
+        else textInput.placeholder = "But your text here - ضع نصك هنا";
+      });
+    }
+
     if(previewText) previewText.addEventListener('input', ()=>{ if(textInput) textInput.value = previewText.textContent; applyStyles(); });
     if(textColor) textColor.addEventListener('input', applyStyles);
     if(bgColor) bgColor.addEventListener('input', applyStyles);
